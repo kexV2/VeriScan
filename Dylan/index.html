@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veriscan</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .upload-area {
+            border: 2px dashed #3498db;
+            border-radius: 5px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .upload-area:hover {
+            background-color: #f0f8ff;
+        }
+        .upload-area.highlight {
+            border-color: #2ecc71;
+            background-color: #e8f5e9;
+        }
+        #file-input {
+            display: none;
+        }
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        #preview {
+            max-width: 100%;
+            max-height: 300px;
+            margin: 20px auto;
+            display: none;
+        }
+        #result-container {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .real {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .fake {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .progress-container {
+            margin-top: 20px;
+            display: none;
+        }
+        .progress {
+            height: 20px;
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: #3498db;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Veriscan - Deepfake Detection Tool</h1>
+        
+        <div id="upload-area" class="upload-area">
+            <p>Drag & drop an image or click to upload</p>
+            <input type="file" id="file-input" accept="image/*">
+            <button class="btn" id="upload-btn">Select Image</button>
+        </div>
+        
+        <img id="preview" src="" alt="Image Preview">
+        
+        <div class="progress-container" id="progress-container">
+            <p>Analyzing image...</p>
+            <div class="progress">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+        </div>
+        
+        <div id="result-container">
+            <h2>Analysis Result</h2>
+            <div id="prediction"></div>
+            <div id="confidence"></div>
+            <div id="forensic-indicators"></div>
+        </div>
+    </div>
+
+    <script>
+        // DOM elements
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('file-input');
+        const uploadBtn = document.getElementById('upload-btn');
+        const preview = document.getElementById('preview');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
+        const resultContainer = document.getElementById('result-container');
+        const prediction = document.getElementById('prediction');
+        const confidence = document.getElementById('confidence');
+        const forensicIndicators = document.getElementById('forensic-indicators');
+
+        // API endpoint
+        const API_URL = 'http://localhost:8000/upload/';
+
+        // Event listeners
+        uploadBtn.addEventListener('click', () => fileInput.click());
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        // Drag and drop functionality
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, () => {
+                uploadArea.classList.add('highlight');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, () => {
+                uploadArea.classList.remove('highlight');
+            });
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            if (files.length > 0 && files[0].type.startsWith('image/')) {
+                handleFile(files[0]);
+            }
+        });
+
+        // Handle the selected file
+        function handleFile(file) {
+            // Display image preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+            }
+            reader.readAsDataURL(file);
+
+            // Upload file to the API
+            uploadFile(file);
+        }
+
+        function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Show progress
+            progressContainer.style.display = 'block';
+            resultContainer.style.display = 'none';
+            
+            // Simulate progress (until actual model prediction is implemented)
+            let progress = 0;
+            const interval = setInterval(() => {
+                if (progress < 90) {
+                    progress += 10;
+                    progressBar.style.width = progress + '%';
+                }
+            }, 300);
+
+            fetch(API_URL, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Clear interval and complete progress bar
+                clearInterval(interval);
+                progressBar.style.width = '100%';
+                
+                // Wait a moment then display a placeholder result (since model prediction isn't implemented yet)
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                    displayPlaceholderResult();
+                }, 500);
+            })
+            .catch(error => {
+                clearInterval(interval);
+                progressContainer.style.display = 'none';
+                alert('Error uploading file: ' + error.message);
+            });
+        }
+
+        // Placeholder function for displaying results (until actual model prediction is implemented)
+        function displayPlaceholderResult() {
+            resultContainer.style.display = 'block';
+            resultContainer.className = Math.random() > 0.5 ? 'real' : 'fake';
+            
+            if (resultContainer.className === 'real') {
+                prediction.innerHTML = '<strong>Prediction:</strong> This image appears to be REAL';
+                confidence.innerHTML = '<strong>Confidence:</strong> 87%';
+                forensicIndicators.innerHTML = '<strong>Forensic Indicators:</strong><ul>' +
+                    '<li>Natural noise pattern distribution</li>' +
+                    '<li>Consistent color profile across image</li>' +
+                    '<li>No detectable compression inconsistencies</li>' +
+                    '</ul>';
+            } else {
+                prediction.innerHTML = '<strong>Prediction:</strong> This image appears to be AI-GENERATED';
+                confidence.innerHTML = '<strong>Confidence:</strong> 92%';
+                forensicIndicators.innerHTML = '<strong>Forensic Indicators:</strong><ul>' +
+                    '<li>Unnatural noise patterns in background</li>' +
+                    '<li>Inconsistent lighting effects</li>' +
+                    '<li>Suspicious texture patterns in details</li>' +
+                    '</ul>';
+            }
+        }
+    </script>
+</body>
+</html>
