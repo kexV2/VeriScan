@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Veriscan</title>
     <style>
-        body {
+       body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             max-width: 800px;
             margin: 0 auto;
@@ -125,6 +125,73 @@
     </div>
 
     <script>
+        // Update API URL for the FastAPI endpoint
+        const API_URL = 'http://localhost:8000/upload/';
+
+        function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Show progress
+            progressContainer.style.display = 'block';
+            resultContainer.style.display = 'none';
+            
+            // Simulate progress
+            let progress = 0;
+            const interval = setInterval(() => {
+                if (progress < 90) {
+                    progress += 10;
+                    progressBar.style.width = progress + '%';
+                }
+            }, 300);
+
+            fetch(API_URL, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                clearInterval(interval);
+                progressBar.style.width = '100%';
+
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                    displayResult(data);  // Use the actual model prediction data here
+                }, 500);
+            })
+            .catch(error => {
+                clearInterval(interval);
+                progressContainer.style.display = 'none';
+                alert('Error uploading file: ' + error.message);
+            });
+        }
+
+        function displayResult(data) {
+            resultContainer.style.display = 'block';
+            
+            // Dynamically show the prediction result from the model
+            if (data.prediction === "Real") {
+                resultContainer.className = 'real';
+                prediction.innerHTML = `<strong>Prediction:</strong> This image appears to be REAL`;
+                confidence.innerHTML = `<strong>Confidence:</strong> ${data.confidence.toFixed(2)}%`;
+                forensicIndicators.innerHTML = `<strong>Forensic Indicators:</strong><ul>
+                    ${data.forensic_indicators.map(item => `<li>${item}</li>`).join('')}
+                </ul>`;
+            } else {
+                resultContainer.className = 'fake';
+                prediction.innerHTML = `<strong>Prediction:</strong> This image appears to be FAKE`;
+                confidence.innerHTML = `<strong>Confidence:</strong> ${data.confidence.toFixed(2)}%`;
+                forensicIndicators.innerHTML = `<strong>Forensic Indicators:</strong><ul>
+                    ${data.forensic_indicators.map(item => `<li>${item}</li>`).join('')}
+                </ul>`;
+            }
+        }
+
         // DOM elements
         const uploadArea = document.getElementById('upload-area');
         const fileInput = document.getElementById('file-input');
@@ -136,9 +203,6 @@
         const prediction = document.getElementById('prediction');
         const confidence = document.getElementById('confidence');
         const forensicIndicators = document.getElementById('forensic-indicators');
-
-        // API endpoint
-        const API_URL = 'http://localhost:8000/upload/';
 
         // Event listeners
         uploadBtn.addEventListener('click', () => fileInput.click());
@@ -192,75 +256,6 @@
 
             // Upload file to the API
             uploadFile(file);
-        }
-
-        function uploadFile(file) {
-            const formData = new FormData();
-            formData.append('file', file);
-
-            // Show progress
-            progressContainer.style.display = 'block';
-            resultContainer.style.display = 'none';
-            
-            // Simulate progress (until actual model prediction is implemented)
-            let progress = 0;
-            const interval = setInterval(() => {
-                if (progress < 90) {
-                    progress += 10;
-                    progressBar.style.width = progress + '%';
-                }
-            }, 300);
-
-            fetch(API_URL, {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                // Clear interval and complete progress bar
-                clearInterval(interval);
-                progressBar.style.width = '100%';
-                
-                // Wait a moment then display a placeholder result (since model prediction isn't implemented yet)
-                setTimeout(() => {
-                    progressContainer.style.display = 'none';
-                    displayPlaceholderResult();
-                }, 500);
-            })
-            .catch(error => {
-                clearInterval(interval);
-                progressContainer.style.display = 'none';
-                alert('Error uploading file: ' + error.message);
-            });
-        }
-
-        // Placeholder function for displaying results (until actual model prediction is implemented)
-        function displayPlaceholderResult() {
-            resultContainer.style.display = 'block';
-            resultContainer.className = Math.random() > 0.5 ? 'real' : 'fake';
-            
-            if (resultContainer.className === 'real') {
-                prediction.innerHTML = '<strong>Prediction:</strong> This image appears to be REAL';
-                confidence.innerHTML = '<strong>Confidence:</strong> 87%';
-                forensicIndicators.innerHTML = '<strong>Forensic Indicators:</strong><ul>' +
-                    '<li>Natural noise pattern distribution</li>' +
-                    '<li>Consistent color profile across image</li>' +
-                    '<li>No detectable compression inconsistencies</li>' +
-                    '</ul>';
-            } else {
-                prediction.innerHTML = '<strong>Prediction:</strong> This image appears to be AI-GENERATED';
-                confidence.innerHTML = '<strong>Confidence:</strong> 92%';
-                forensicIndicators.innerHTML = '<strong>Forensic Indicators:</strong><ul>' +
-                    '<li>Unnatural noise patterns in background</li>' +
-                    '<li>Inconsistent lighting effects</li>' +
-                    '<li>Suspicious texture patterns in details</li>' +
-                    '</ul>';
-            }
         }
     </script>
 </body>
