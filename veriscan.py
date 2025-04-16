@@ -33,7 +33,7 @@ except Exception as e:
     print(f"Warning: Could not set permissions for uploads directory: {str(e)}")
 
 # Load the trained deepfake detection model
-MODEL_PATH = "deepfake_model_expanded.h5"
+MODEL_PATH = "deepfake_model_final.h5"
 
 def load_model():
     try:
