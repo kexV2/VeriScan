@@ -52,6 +52,17 @@ def load_model():
         print(f"Error loading model: {str(e)}")
         raise HTTPException(status_code=500, detail="Error loading model.")
 
+# Configure GPU memory growth
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if gpus:
+    try:
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
+        print(f"Using {len(gpus)} GPU(s) for training")
+    except Exception as e:
+        print(f"Error configuring GPU: {str(e)}")
+
+
 # Load the model at startup
 model = load_model()
 
